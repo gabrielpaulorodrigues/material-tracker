@@ -10,7 +10,7 @@ interface Material {
 }
 
 export function Form() {
-  const { materials, addMaterial, updateMaterial } = useMaterials();
+  const { materials, addMaterial, updateMaterial, addPurchase } = useMaterials();
 
   // Estado para controlar a exibição do formulário de novo material
   const [showMaterialForm, setShowMaterialForm] = useState(false);
@@ -39,7 +39,20 @@ export function Form() {
   // Função para lidar com o envio do formulário de compra
   const handlePurchaseSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateMaterial(parseInt(selectedMaterial), parseFloat(weight), parseFloat(pricePerKg));
+    const materialId = parseInt(selectedMaterial);
+    const purchaseWeight = parseFloat(weight);
+    const purchasePricePerKg = parseFloat(pricePerKg);
+    const total = purchaseWeight * purchasePricePerKg;
+    const newPurchase = {
+      id: Date.now(), // Use timestamp as unique ID
+      materialId,
+      date: new Date().toISOString(), // Store date in ISO 8601 format
+      weight: purchaseWeight,
+      pricePerKg: purchasePricePerKg,
+      total,
+    };
+    addPurchase(newPurchase);
+    updateMaterial(materialId, purchaseWeight, purchasePricePerKg);
     setSelectedMaterial("");
     setWeight("");
     setPricePerKg("");
