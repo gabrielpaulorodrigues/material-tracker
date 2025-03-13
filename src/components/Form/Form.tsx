@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Scale, DollarSign, Save } from "lucide-react";
+import { Plus, Scale, DollarSign, Save, Trash2 } from "lucide-react";
 import { useMaterials } from "../../context/MaterialsContext/MaterialsContext";
 
 interface Material {
@@ -10,7 +10,7 @@ interface Material {
 }
 
 export function Form() {
-  const { materials, addMaterial, updateMaterial, addPurchase } = useMaterials();
+  const { materials, purchases, addMaterial, updateMaterial, addPurchase, removeMaterial } = useMaterials();
 
   // Estado para controlar a exibição do formulário de novo material
   const [showMaterialForm, setShowMaterialForm] = useState(false);
@@ -44,9 +44,9 @@ export function Form() {
     const purchasePricePerKg = parseFloat(pricePerKg);
     const total = purchaseWeight * purchasePricePerKg;
     const newPurchase = {
-      id: Date.now(), // Use timestamp as unique ID
+      id: Date.now(), 
       materialId,
-      date: new Date().toISOString(), // Store date in ISO 8601 format
+      date: new Date().toISOString(), 
       weight: purchaseWeight,
       pricePerKg: purchasePricePerKg,
       total,
@@ -58,8 +58,19 @@ export function Form() {
     setPricePerKg("");
   };
 
+  // Função para calcular o peso total e o preço médio de compra de um material
+  const calculateMaterialStats = (materialId: number) => {
+    const materialPurchases = purchases.filter(purchase => purchase.materialId === materialId);
+    const totalWeight = materialPurchases.reduce((sum, purchase) => sum + purchase.weight, 0);
+    const totalPrice = materialPurchases.reduce((sum, purchase) => sum + (purchase.weight * purchase.pricePerKg), 0);
+    const averagePricePerKg = totalWeight > 0 ? totalPrice / totalWeight : 0;
+    return { totalWeight, averagePricePerKg };
+  };
+
+  const sortedMaterials = [...materials].sort((a, b) => a.name.localeCompare(b.name));
+
   return (
-    <div >
+    <div>
       <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
         {/* Cabeçalho com botão para adicionar novo material */}
         <div className="flex justify-between items-center mb-5">
@@ -69,7 +80,7 @@ export function Form() {
             className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center gap-2"
           >
             <Plus className="h-5 w-5" />
-            Adicionar Novo Material
+            Cadastrar Novo Material
           </button>
         </div>
 
@@ -99,6 +110,28 @@ export function Form() {
             </div>
           </form>
         )}
+
+        {/* Lista de Materiais */}
+        <div className="mt-6 mb-6 p-4 bg-gray-50 rounded-lg">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Materiais Cadastrados</h2>
+          <ul>
+            {sortedMaterials.map(material => {
+              const {} = calculateMaterialStats(material.id);
+              return (
+                <li key={material.id} className="flex justify-between items-center mb-2">
+                  <span>{material.name}</span>
+                  <button
+                    onClick={() => removeMaterial(material.id)}
+                    className="text-red-600 hover:text-red-900 transition-colors"
+                    title="Remove material"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
 
         {/* Formulário para registrar uma compra */}
         <form onSubmit={handlePurchaseSubmit} className="space-y-4">

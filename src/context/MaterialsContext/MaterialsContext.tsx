@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import  { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
 interface Material {
   id: number;
@@ -23,6 +23,7 @@ interface MaterialsContextType {
   updateMaterial: (id: number, weight: number, pricePerKg: number) => void;
   addPurchase: (purchase: Purchase) => void;
   removePurchase: (id: number) => void;
+  removeMaterial: (id: number) => void;
 }
 
 const MaterialsContext = createContext<MaterialsContextType | undefined>(undefined);
@@ -43,6 +44,7 @@ export const MaterialsProvider = ({ children }: { children: ReactNode }) => {
   }, [purchases]);
 
   const addMaterial = (materialName: string) => {
+    if (materials.find(material => material.name === materialName)) return alert("Material já cadastrado");
     const newMaterial: Material = { id: materials.length + 1, name: materialName, weight: 0, pricePerKg: 0 };
     setMaterials([...materials, newMaterial]);
   };
@@ -77,8 +79,13 @@ export const MaterialsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const removeMaterial = (id: number) => {
+    setMaterials(materials.filter(material => material.id !== id));
+    setPurchases(purchases.filter(purchase => purchase.materialId !== id));
+  };
+
   return (
-    <MaterialsContext.Provider value={{ materials, purchases, addMaterial, updateMaterial, addPurchase, removePurchase }}>
+    <MaterialsContext.Provider value={{ materials, purchases, addMaterial, updateMaterial, addPurchase, removePurchase, removeMaterial   }}>
       {children}
     </MaterialsContext.Provider>
   );

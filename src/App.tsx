@@ -1,7 +1,7 @@
 import { MaterialsProvider } from "./context/MaterialsContext/MaterialsContext";
 import { Form } from "./components/Form/Form";
-import { Dashboard } from "./components/Dashboard/Dashboard";
 import { PurchaseHistory } from "./components/PurchaseHistory/PurchaseHistory";
+import { Dashboard } from "./components/Dashboard/Dashboard";
 
 function App() {
   return (
