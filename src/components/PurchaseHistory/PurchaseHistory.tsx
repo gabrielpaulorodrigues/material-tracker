@@ -1,21 +1,46 @@
 import { useState } from "react";
 import { History, Calendar, Trash2 } from "lucide-react";
-import { useMaterials } from "../../context/MaterialsContext/MaterialsContext";
+import { useMaterials } from "../../context/MaterialContext/MaterialContext";
+import { usePurchase } from "../../context/PurchaseContext/PurchaseContext";
 import { format } from "date-fns";
+import { ConfirmModal } from "../ConfirmModal/ConfirmModal";
 
 export function PurchaseHistory() {
-  const { materials, purchases, removePurchase } = useMaterials();
+  const { materials } = useMaterials();
+  const { purchases, removePurchase } = usePurchase();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [selectedMaterial, setSelectedMaterial] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [purchaseToRemove, setPurchaseToRemove] = useState<number | null>(null);
 
   const filteredPurchases = purchases
     .filter(purchase => {
       const purchaseDate = new Date(purchase.date);
       const start = startDate ? new Date(startDate) : null;
       const end = endDate ? new Date(endDate) : null;
-      return (!start || purchaseDate >= start) && (!end || purchaseDate <= end);
+      const materialMatch = selectedMaterial ? purchase.materialId === parseInt(selectedMaterial) : true;
+      return (!start || purchaseDate >= start) && (!end || purchaseDate <= end) && materialMatch;
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Ordena por data decrescente
+
+  const handleRemovePurchase = (id: number) => {
+    setPurchaseToRemove(id);
+    setIsModalOpen(true);
+  };
+
+  const confirmRemovePurchase = () => {
+    if (purchaseToRemove !== null) {
+      removePurchase(purchaseToRemove);
+      setPurchaseToRemove(null);
+      setIsModalOpen(false);
+    }
+  };
+
+  const closeModal = () => {
+    setPurchaseToRemove(null);
+    setIsModalOpen(false);
+  };
 
   return (
     <div>
@@ -31,14 +56,14 @@ export function PurchaseHistory() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Data de Inicio
-                </label>
+                </label>  
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                   <input
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="pl-10 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="h-10 pl-10 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -53,9 +78,27 @@ export function PurchaseHistory() {
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="pl-10 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="h-10 pl-10 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Material
+                </label>
+                <select
+                  value={selectedMaterial}
+                  onChange={(e) => setSelectedMaterial(e.target.value)}
+                  className="h-10 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="">Todos os Materiais</option>
+                  {materials.map(material => (
+                    <option key={material.id} value={material.id.toString()}>
+                      {material.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
@@ -86,7 +129,7 @@ export function PurchaseHistory() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">${purchase.total.toFixed(2)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <button
-                          onClick={() => removePurchase(purchase.id)}
+                          onClick={() => handleRemovePurchase(purchase.id)}
                           className="text-red-600 hover:text-red-900 transition-colors"
                           title="Remove purchase"
                         >
@@ -101,6 +144,12 @@ export function PurchaseHistory() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onConfirm={confirmRemovePurchase}
+        message="Tem certeza que deseja excluir esta compra?"
+      />
     </div>
   );
 }

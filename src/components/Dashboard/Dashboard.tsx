@@ -1,5 +1,5 @@
 import { DollarSign, Scale, TrendingUp } from "lucide-react";
-import { useMaterials } from "../../context/MaterialsContext/MaterialsContext";
+import { useMaterials } from "../../context/MaterialContext/MaterialContext";
 
 export function Dashboard() {
   const { materials } = useMaterials();

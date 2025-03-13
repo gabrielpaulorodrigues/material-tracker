@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Plus, Scale, DollarSign, Save, Trash2 } from "lucide-react";
-import { useMaterials } from "../../context/MaterialsContext/MaterialsContext";
+import { useMaterials } from "../../context/MaterialContext/MaterialContext";
+import { usePurchase } from "../../context/PurchaseContext/PurchaseContext";
+import { ConfirmModal } from "../ConfirmModal/ConfirmModal";
 
 interface Material {
   id: number;
@@ -10,7 +12,8 @@ interface Material {
 }
 
 export function Form() {
-  const { materials, purchases, addMaterial, updateMaterial, addPurchase, removeMaterial } = useMaterials();
+  const { materials, addMaterial, updateMaterial, removeMaterial } = useMaterials();
+  const { purchases, addPurchase } = usePurchase();
 
   // Estado para controlar a exibição do formulário de novo material
   const [showMaterialForm, setShowMaterialForm] = useState(false);
@@ -22,6 +25,10 @@ export function Form() {
   const [weight, setWeight] = useState("");
   // Estado para armazenar o preço por kg do material no formulário de compra
   const [pricePerKg, setPricePerKg] = useState("");
+  // Estado para controlar a exibição do modal de confirmação
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Estado para armazenar o material a ser removido
+  const [materialToRemove, setMaterialToRemove] = useState<Material | null>(null);
 
   // Função para adicionar um novo material
   const addMaterialHandler = (materialName: string) => {
@@ -65,6 +72,27 @@ export function Form() {
     const totalPrice = materialPurchases.reduce((sum, purchase) => sum + (purchase.weight * purchase.pricePerKg), 0);
     const averagePricePerKg = totalWeight > 0 ? totalPrice / totalWeight : 0;
     return { totalWeight, averagePricePerKg };
+  };
+
+  // Função para abrir o modal de confirmação
+  const handleRemoveMaterial = (material: Material) => {
+    setMaterialToRemove(material);
+    setIsModalOpen(true);
+  };
+
+  // Função para confirmar a remoção do material
+  const confirmRemoveMaterial = () => {
+    if (materialToRemove) {
+      removeMaterial(materialToRemove.id);
+      setMaterialToRemove(null);
+      setIsModalOpen(false);
+    }
+  };
+
+  // Função para fechar o modal de confirmação
+  const closeModal = () => {
+    setMaterialToRemove(null);
+    setIsModalOpen(false);
   };
 
   const sortedMaterials = [...materials].sort((a, b) => a.name.localeCompare(b.name));
@@ -116,12 +144,12 @@ export function Form() {
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Materiais Cadastrados</h2>
           <ul>
             {sortedMaterials.map(material => {
-              const {} = calculateMaterialStats(material.id);
+              const { } = calculateMaterialStats(material.id);
               return (
                 <li key={material.id} className="flex justify-between items-center mb-2">
                   <span>{material.name}</span>
                   <button
-                    onClick={() => removeMaterial(material.id)}
+                    onClick={() => handleRemoveMaterial(material)}
                     className="text-red-600 hover:text-red-900 transition-colors"
                     title="Remove material"
                   >
@@ -204,6 +232,12 @@ export function Form() {
           </button>
         </form>
       </div>
+      <ConfirmModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onConfirm={confirmRemoveMaterial}
+        message="Tem certeza que deseja excluir este material?"
+      />
     </div>
   );
 }

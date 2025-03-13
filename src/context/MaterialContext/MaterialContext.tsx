@@ -1,4 +1,4 @@
-import  { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
 interface Material {
   id: number;
@@ -7,22 +7,10 @@ interface Material {
   pricePerKg: number;
 }
 
-interface Purchase {
-  id: number;
-  materialId: number;
-  date: string;
-  weight: number;
-  pricePerKg: number;
-  total: number;
-}
-
 interface MaterialsContextType {
   materials: Material[];
-  purchases: Purchase[];
   addMaterial: (materialName: string) => void;
   updateMaterial: (id: number, weight: number, pricePerKg: number) => void;
-  addPurchase: (purchase: Purchase) => void;
-  removePurchase: (id: number) => void;
   removeMaterial: (id: number) => void;
 }
 
@@ -30,18 +18,17 @@ const MaterialsContext = createContext<MaterialsContextType | undefined>(undefin
 
 export const MaterialsProvider = ({ children }: { children: ReactNode }) => {
   const [materials, setMaterials] = useState<Material[]>([]);
-  const [purchases, setPurchases] = useState<Purchase[]>([]);
 
   useEffect(() => {
-    const storedPurchases = localStorage.getItem("purchases");
-    if (storedPurchases) {
-      setPurchases(JSON.parse(storedPurchases));
+    const storedMaterials = localStorage.getItem("materials");
+    if (storedMaterials) {
+      setMaterials(JSON.parse(storedMaterials));
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("purchases", JSON.stringify(purchases));
-  }, [purchases]);
+    localStorage.setItem("materials", JSON.stringify(materials));
+  }, [materials]);
 
   const addMaterial = (materialName: string) => {
     if (materials.find(material => material.name === materialName)) return alert("Material já cadastrado");
@@ -60,32 +47,12 @@ export const MaterialsProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
-  const addPurchase = (purchase: Purchase) => {
-    setPurchases([...purchases, purchase]);
-  };
-
-  const removePurchase = (id: number) => {
-    const purchaseToRemove = purchases.find(purchase => purchase.id === id);
-    if (purchaseToRemove) {
-      setPurchases(purchases.filter(purchase => purchase.id !== id));
-      setMaterials(materials.map(material => {
-        if (material.id === purchaseToRemove.materialId) {
-          const newWeight = material.weight - purchaseToRemove.weight;
-          const newPricePerKg = newWeight > 0 ? ((material.weight * material.pricePerKg) - (purchaseToRemove.weight * purchaseToRemove.pricePerKg)) / newWeight : 0;
-          return { ...material, weight: newWeight, pricePerKg: newPricePerKg };
-        }
-        return material;
-      }));
-    }
-  };
-
   const removeMaterial = (id: number) => {
     setMaterials(materials.filter(material => material.id !== id));
-    setPurchases(purchases.filter(purchase => purchase.materialId !== id));
   };
 
   return (
-    <MaterialsContext.Provider value={{ materials, purchases, addMaterial, updateMaterial, addPurchase, removePurchase, removeMaterial   }}>
+    <MaterialsContext.Provider value={{ materials, addMaterial, updateMaterial, removeMaterial }}>
       {children}
     </MaterialsContext.Provider>
   );
@@ -94,7 +61,7 @@ export const MaterialsProvider = ({ children }: { children: ReactNode }) => {
 export const useMaterials = () => {
   const context = useContext(MaterialsContext);
   if (!context) {
-    throw new Error("Erro no Contexto");
+    throw new Error("useMaterials must be used within a MaterialsProvider");
   }
   return context;
 };
